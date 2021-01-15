@@ -1,0 +1,221 @@
+--사원의 사번, 이름, 급여, 직무ID, 부서ID를 출력하시오 (hr계정)
+
+select employee_id, first_name, salary, job_id, department_id
+from employees;
+
+--사원의 사번, 이름, 급여, 직무ID, 직무명, 부서ID를 출력하시오 (hr계정)
+select employee_id, first_name, salary, e.job_id, department_id
+from employees e JOIN jobs n ON e.job_id = n.job_id;
+
+select *
+from employees;
+
+select *
+from jobs;
+
+
+select 
+    employee_id,
+    first_name,
+    salary,
+    e.job_id, -- 또는 j.job_id
+    job_title,
+    department_id
+from employees e JOIN jobs j ON e.job_id = j.job_id; 
+    --JOIN ON 은 테이블명.컬럼명을 해야하지만
+    --from employees NATURAL JOIN jobs; --NATURAL 에서는 컬럼명만 쓴다.
+
+
+--사원의 사번, 이름, 부서ID, 부서명을 출력하시오 JOIN ON
+select
+    employee_id,
+    first_name,
+    e.department_id, --얘는 두 테이블에 모두 중복된 값이라서 하나만 표기하기 위해 테이블.씀
+    department_name 
+from employees e JOIN departments d ON e.department_id = d.department_id;
+
+
+--사원의 사번, 이름, 부서ID, 부서명을 출력하시오 NATURAL JOIN 
+select
+    employee_id,
+    first_name,
+    department_id,
+    department_name
+from employees NATURAL JOIN departments;
+
+
+select
+    employee_id,
+    first_name,
+    department_id,
+    department_name
+from employees JOIN departments USING(department_id);
+
+--사원의 사번, 이름, 부서ID, 부서명, 직무ID, 직무명을 출력하시오 --★★★★★★★★★★★★★★
+select
+    employee_id 사번,
+    first_name 이름,
+    e.department_id 부서ID,
+    department_name 부서명,
+    j.job_id 직무ID,
+    job_title 직무명
+from employees e JOIN departments d ON e.department_id = d.department_id
+                 JOIN jobs j ON e.job_id = j.job_id;
+
+
+--홀수사번을 대상으로
+--사원의 사번, 이름과 근무하는 부서명, 부서가 속한 도시명을 출력하시오
+--테이블 읽는 순서(오라클 엔진이 판단)
+select
+    employee_id 사번,
+    first_name 이름,
+    department_name 부서명,
+    city 도시명
+from employees e JOIN departments d ON (e.department_id = d.department_id)
+                 JOIN locations l ON (d.location_id = l.location_id)
+where MOD(employee_id,2)=1
+ORDER BY city, department_name;
+
+
+--부서별 부서명과 사원수, 총급여를 출력하시오
+select department_name, COUNT(*), sum(salary)
+from employees e JOIN departments d USING(department_id)
+group by department_name;
+
+
+
+
+
+
+
+--***HR계정에서 실습*** by 채플린
+
+
+--1. 급여가 10000이상인 사원의 사번, 부서번호, 이름, 급여, 수당을 출력하시오.
+--단, 부서번호가 30번,60번, 90번인 부서는 제외하고 사원을 검색한다.
+select 
+    employee_id, 
+    department_id, 
+    first_name, 
+    salary, 
+    commission_pct
+from employees
+where department_id NOT IN(30,60,90);
+
+
+
+--2.급여가 4000보다 많은 사원들의 부서별 급여평균를 출력하시오. 
+--단 급여평균은 소숫점이하2자리에서 반올림합니다. 
+select 
+    round(avg(salary),1) 급여평균
+from employees e JOIN departments d ON e.department_id = d.department_id
+where salary>4000
+group by department_name
+ORDER BY avg(salary);
+
+
+
+--3.지역별 지역번호(location_id), 부서수를 출력하시오     
+--단, 지역번호가 2000번 이상인 지역만 출력한다
+select 
+    l.location_id, 
+    COUNT(*)
+from employees e JOIN departments d ON (e.department_id = d.department_id)
+                 JOIN locations l ON (d.location_id = l.location_id)
+where l.location_id>=2000
+group by l.location_id;
+
+
+
+--4. 하반기(7~12월) 월별 입사자수를 출력하시오.입사자수가 5명이상인 경우만 출력한다
+--숫자랑 비교할 때에는 TO_NUBMER로 숫자형으로 변환시키는 것이 안전하다.
+select 
+    COUNT(*)||'명', 
+    TO_NUMBER(TO_CHAR(hire_date, 'MM'))||'월' 
+    --TO_NUMBER로 숫자형으로 변환했지만 ||'월'과 만나면 다시 문자형이 된다.
+from employees
+where TO_NUMBER(TO_CHAR(hire_date,'MM'))>=7 
+GROUP BY TO_CHAR(hire_date,'MM')
+HAVING COUNT(*)>=5
+ORDER BY TO_NUMBER(TO_CHAR(hire_date, 'MM'));
+--숫자형으로 바꿔야 숫자순으로 정렬이 된다.
+
+
+--5.성이 'Davies'인 사원의 부서ID와 급여를 출력하시오.
+select last_name, department_id, salary
+from employees
+where last_name='Davies';
+
+
+
+--6. 성이 'Davies'인 사원과 같은 부서에 근무하는 사원들의 사번, 성, 이름을 출력하시오
+--이중 쿼리를 이용한 문제해결
+select employee_id, last_name, first_name
+from employees  
+where department_id = (select department_id from employees where last_name LIKE 'Davies');
+
+--더블 JOIN을 이용한 문제해결
+select e2.employee_id, e2.last_name, e2.first_name
+from employees e1 JOIN employees e2 ON e1.department_id = e2.department_id
+where e1.last_name = 'Davies';
+
+
+
+--7. 'Seattle', 'Toronto'도시에  근무하는 
+--사원들의 도시명,사번, 이름, 부서ID, 부서명 을 출력하시오
+select city, employee_id, first_name, e.department_id, department_name
+from employees e JOIN departments d ON(e.department_id = d.department_id)
+                 JOIN locations l   ON(d.location_id = l.location_id)
+where city IN('Seattle', 'Toronto');
+
+
+
+--8. 'Seattle'을 제외한 도시의 부서별 사원수가 5명미만인 
+--도시명, 부서ID, 부서명, 사원수를 출력하시오 
+--JOIN USING 을 이용 
+select city, COUNT(*), department_id, department_name
+from employees e JOIN departments d USING(department_id)
+                 JOIN locations l USING(location_id)
+where city <> 'Seattle' 
+group by city, department_id, department_name
+having COUNT(*)<5;
+
+--JOIN ON 을 이용
+select city, COUNT(*), e.department_id, department_name
+from employees e JOIN departments d ON e.department_id = d.department_id
+                 JOIN locations l   ON d.location_ID = l.location_id
+where city <> 'Seattle'                                        
+group by city, e.department_id, department_name
+having COUNT(*)<5;
+
+
+
+--9.직책(job_title)이 'President'인 사원의 사번, 이름을 출력하시오: (NaturalJOIN으로 표현)
+select employee_id, first_name
+from employees NATURAL JOIN jobs
+where job_title = 'President';
+
+
+
+--10. 직책(job_title)이 'President'가 아닌 사원의 사번, 이름을 출력하시오(USING으로 표현)
+select employee_id, first_name
+from employees e JOIN jobs j USING(job_id)
+where job_title <> 'President';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
