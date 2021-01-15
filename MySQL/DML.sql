@@ -76,3 +76,11 @@ select * from product;
 select * from order_info;
 select * from order_line;
 
+
+
+
+
+CREATE TABLE accout(
+  no CHAR(3),
+  balance NUMBER(5) DEFAULT 0 NOT NULL --0값과 null값은 의미가 다르다.
+  CONSTRAINT account_no_pk PRIMARY KEY(no)
